@@ -104,11 +104,11 @@ class LastFmService():
             """scrobbler"""
             scrobbler_network = pylast.get_lastfm_network(username=username, password_hash=password_hash)
             self.scrobbler = scrobbler_network.get_scrobbler("fbx", "1.0")
-        except:
+        except Exception, e:
             self.network = None
             self.scrobbler = None
             self.controls.statusbar.set_text("Error last.fm connection with %s/%s" % (username, FCBase().lfm_password))
-            logging.error("Either invalid last.fm login or password or network problems")
+            logging.error("Either invalid last.fm login or password or network problems: " + str(e))
             """
             val = show_login_password_error_dialog(_("Last.fm connection error"), _("Verify user and password"), username, FC().lfm_password)
             if val:
