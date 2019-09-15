@@ -35,7 +35,7 @@ def setup(level="error", filename=None):
 
     logging.getLogger("foobnix")
     logging.basicConfig(
-        level=levels[level],
+        level=levels["debug"],
         format="[%(levelname)-8s] [%(asctime)s] [%(filename)s:%(lineno)d] %(message)s",
         datefmt="%H:%M:%S",
         filename=filename,
@@ -45,18 +45,18 @@ def setup(level="error", filename=None):
 def print_platform_info():
     import platform
     logging.debug('*************** PLATFORM INFORMATION ************************')
-    
+
     logging.debug('==Interpreter==')
     logging.debug('Version      :' + platform.python_version())
     logging.debug('Version tuple:' + str(platform.python_version_tuple()))
     logging.debug('Compiler     :' + platform.python_compiler())
     logging.debug('Build        :' + str(platform.python_build()))
-    
+
     logging.debug('==Platform==')
     logging.debug('Normal :' + platform.platform())
     logging.debug('Aliased:' + platform.platform(aliased=True))
     logging.debug('Terse  :' + platform.platform(terse=True))
-    
+
     logging.debug('==Operating System and Hardware Info==')
     logging.debug('uname:' + str(platform.uname()))
     logging.debug('system   :' + platform.system())
@@ -65,7 +65,7 @@ def print_platform_info():
     logging.debug('version  :' + platform.version())
     logging.debug('machine  :' + platform.machine())
     logging.debug('processor:' + platform.processor())
-    
+
     logging.debug('==Executable Architecture==')
     logging.debug('interpreter:' + str(platform.architecture()))
     logging.debug('/bin/ls    :' + str(platform.architecture('/bin/ls')))
@@ -73,4 +73,4 @@ def print_platform_info():
 
 if __name__ == '__main__':
     setup("debug")
-    print_platform_info()     
+    print_platform_info()

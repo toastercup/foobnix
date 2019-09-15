@@ -904,7 +904,7 @@ class LastFMNetwork(_Network):
             api_key=api_key,
             api_secret=api_secret,
             session_key=session_key,
-            submission_server="http://post.audioscrobbler.com:80/",
+            submission_server="https://post.audioscrobbler.com:443/",
             username=username,
             password_hash=password_hash,
             token=token,
