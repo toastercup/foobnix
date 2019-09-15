@@ -7,8 +7,9 @@ Created on Feb 26, 2010
 import os
 from gi.repository import Gtk
 import sys
-import urllib.request
+import urllib
 import shutil
+import thread
 import logging
 import threading
 
@@ -41,7 +42,7 @@ def rename_file_on_disk(row, index_path, index_text):
     hbox = Gtk.Box.new(Gtk.Orientation.HORIZONTAL, 0)
     if os.path.isdir(path):
         entry.set_text(name)
-        hbox.pack_start(entry, False, False, 0)
+        hbox.pack_start(entry)
         title = _('Rename folder')
     else:
         name_tuple = os.path.splitext(name)
@@ -49,11 +50,11 @@ def rename_file_on_disk(row, index_path, index_text):
         entry_ext = Gtk.Entry()
         entry_ext.set_width_chars(7)
         entry_ext.set_text(name_tuple[1][1:])
-        hbox.pack_start(entry, False, False, 0)
-        hbox.pack_start(entry_ext, False, False, 0)
+        hbox.pack_start(entry)
+        hbox.pack_start(entry_ext)
         title = _('Rename file')
     dialog = Gtk.Dialog(title, buttons=("Rename", Gtk.ResponseType.ACCEPT, "Cancel", Gtk.ResponseType.REJECT))
-    dialog.vbox.pack_start(hbox, False, False, 0)
+    dialog.vbox.pack_start(hbox)
     dialog.set_icon_from_file(get_foobnix_resourse_path_by_name(ICON_FOOBNIX))
     dialog.show_all()
     if dialog.run() == Gtk.ResponseType.ACCEPT:
@@ -65,7 +66,7 @@ def rename_file_on_disk(row, index_path, index_text):
             os.rename(path, new_path)
             row[index_path] = new_path
             row[index_text] = os.path.basename(new_path)
-        except IOError as e:
+        except IOError, e:
             logging.error(e)
         dialog.destroy()
         return True
@@ -77,7 +78,7 @@ def delete_files_from_disk(row_refs, paths, get_iter_from_row_reference):
     dialog = Gtk.Dialog(title, buttons=("Delete", Gtk.ResponseType.ACCEPT, "Cancel", Gtk.ResponseType.REJECT))
     dialog.set_default_size(500, 200)
     dialog.set_border_width(5)
-    dialog.vbox.pack_start(label, False, False, 0)
+    dialog.vbox.pack_start(label)
     dialog.set_icon_from_file(get_foobnix_resourse_path_by_name(ICON_FOOBNIX))
     buffer = Gtk.TextBuffer()
     text = Gtk.TextView(buffer=buffer)
@@ -86,7 +87,7 @@ def delete_files_from_disk(row_refs, paths, get_iter_from_row_reference):
     scrolled_window = Gtk.ScrolledWindow()
     scrolled_window.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
     scrolled_window.add(text)
-    dialog.vbox.pack_start(scrolled_window, False, False, 0)
+    dialog.vbox.pack_start(scrolled_window)
     for path in paths:
         name = os.path.basename(path)
         buffer.insert_at_cursor('\t' + name + '\n')
@@ -102,7 +103,7 @@ def delete_files_from_disk(row_refs, paths, get_iter_from_row_reference):
                 else:
                     del_dir(path)
                 model.remove(get_iter_from_row_reference(row_ref))
-            except Exception as e:
+            except Exception, e:
                 logging.error(str(e))
                 continue
         dialog.destroy()
@@ -135,9 +136,9 @@ def copy_move_files_dialog(files, dest_folder, copy=None):
     area.text.set_editable(False)
     area.text.set_cursor_visible(False)
     area.buffer.set_text("\n".join([os.path.basename(path) for path in files]))
-    dialog.vbox.pack_start(area.scroll, False, False, 0)
+    dialog.vbox.pack_start(area.scroll)
     dialog.set_border_width(5)
-    dialog.vbox.pack_start(label, False, False, 0)
+    dialog.vbox.pack_start(label)
     dialog.set_icon_from_file(get_foobnix_resourse_path_by_name(ICON_FOOBNIX))
     dialog.set_default_size(400, 150)
     dialog.show_all()
@@ -155,9 +156,9 @@ def create_folder_dialog(path):
     label2 = Gtk.Label.new(_("Enter new folder's name:"))
     entry = Gtk.Entry()
     dialog.set_border_width(5)
-    dialog.vbox.pack_start(label1, False, False, 0)
-    dialog.vbox.pack_start(label2, False, False, 0)
-    dialog.vbox.pack_start(entry, False, False, 0)
+    dialog.vbox.pack_start(label1)
+    dialog.vbox.pack_start(label2)
+    dialog.vbox.pack_start(entry)
     dialog.show_all()
     ok_button.grab_default()
     def task():
@@ -167,7 +168,7 @@ def create_folder_dialog(path):
                 full_path = os.path.join(dirname, folder_name)
                 try:
                     os.mkdir(full_path)
-                except OSError as e:
+                except OSError, e:
                     logging.error(e)
                     if str(e).startswith("[Errno 17]"):
                         er_message = _("So folder already exists")
@@ -225,7 +226,7 @@ def get_file_path_from_dnd_dropped_uri(uri):
         path = uri[7:]  # 7 is len('file://')
     elif uri.startswith('file:'):   # xffm
         path = uri[5:]  # 5 is len('file:')
-    path = urllib.request.url2pathname(path)    # escape special chars
+    path = urllib.url2pathname(path)    # escape special chars
     path = path.strip('\r\n\x00')   # remove \r\n and NULL
 
     return path
@@ -276,7 +277,7 @@ def copy_move_with_progressbar(pr_window, src, dst_folder, move=False, symlinks=
             except threading.ThreadError:
                 m.terminate()
                 os.remove(os.path.join(dst_folder, os.path.basename(src)))
-        threading.Thread(target = task, args = ()).start()
+        thread.start_new_thread(task, ())
         if m.is_alive():
             m.join()
         return
@@ -312,7 +313,7 @@ def copy_move_with_progressbar(pr_window, src, dst_folder, move=False, symlinks=
     """
     try:
         names = os.listdir(src)
-    except OSError as why:
+    except OSError, why:
         logging.error(why)
     if ignore is not None:
         ignored_names = ignore(src, names)
@@ -340,7 +341,7 @@ def copy_move_with_progressbar(pr_window, src, dst_folder, move=False, symlinks=
                 copy_move_one_file(srcname, subfolder)
 
                 # XXX What about devices, sockets etc.?
-        except (IOError, os.error) as why:
+        except (IOError, os.error), why:
             errors.append((srcname, dstname, str(why)))
         # catch the Error from the recursive copytree so that we can
         # continue with other files
@@ -349,7 +350,7 @@ def copy_move_with_progressbar(pr_window, src, dst_folder, move=False, symlinks=
     else:
         try:
             shutil.copystat(src, dst_folder)
-        except OSError as why:
+        except OSError, why:
             errors.extend((src, dst_folder, str(why)))
 
 def copy_to(old_paths):

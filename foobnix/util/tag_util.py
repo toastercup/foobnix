@@ -8,6 +8,7 @@ Created on Jan 25, 2011
 from gi.repository import Gtk
 import logging
 import os.path
+import thread
 
 from foobnix.util.id3_util import correct_encoding
 from foobnix.util.audio import get_mutagen_audio
@@ -67,8 +68,8 @@ class TagEditor(ChildTopWindow):
             vars()[tag_name + "_hbox"] = Gtk.Box.new(Gtk.Orientation.HORIZONTAL, 5)
             self.hboxes.append(vars()[tag_name + "_hbox"])
 
-            self.hboxes[-1].pack_end(check_button, False, False, 0)
-            self.hboxes[-1].pack_end(self.tag_entries[-1], True, True, 0)
+            self.hboxes[-1].pack_end(check_button, False, False)
+            self.hboxes[-1].pack_end(self.tag_entries[-1], True, True)
 
 
         lvbox = Gtk.Box.new(Gtk.Orientation.VERTICAL, 7)
@@ -79,8 +80,8 @@ class TagEditor(ChildTopWindow):
         hpan = Gtk.Paned.new(Gtk.Orientation.HORIZONTAL)
 
         for label, hbox in zip(self.labels, self.hboxes):
-            lvbox.pack_start(label, False, False, 0)
-            rvbox.pack_start(hbox, False, False, 0)
+            lvbox.pack_start(label)
+            rvbox.pack_start(hbox)
 
         hpan.pack1(lvbox)
         hpan.pack2(rvbox)
@@ -90,11 +91,11 @@ class TagEditor(ChildTopWindow):
 
         buttons_hbox = Gtk.Box.new(Gtk.Orientation.HORIZONTAL, 10)
         buttons_hbox.set_homogeneous(True)
-        buttons_hbox.pack_start(apply_button, False, False, 0)
-        buttons_hbox.pack_start(close_button, False, False, 0)
+        buttons_hbox.pack_start(apply_button)
+        buttons_hbox.pack_start(close_button)
 
         vbox = Gtk.Box.new(Gtk.Orientation.VERTICAL, 15)
-        vbox.pack_start(hpan, False, False, 0)
+        vbox.pack_start(hpan)
         vbox.pack_start(buttons_hbox, True, True, 10)
 
         apply_button.connect("clicked", self.save_audio_tags, self.paths)
@@ -124,7 +125,7 @@ class TagEditor(ChildTopWindow):
                 artists[path] = _('Unknown artist')
                 titles[path] = self.store[path][1]
 
-            if path in artists:
+            if artists.has_key(path):
                 texts[path] = artists[path] + ' - ' + titles[path]
             else:
                 texts[path] = os.path.basename(path)
@@ -174,7 +175,7 @@ class TagEditor(ChildTopWindow):
             if not audio:
                 try:
                     audio.add_tags(ID3=EasyID3)
-                except Exception as e:
+                except Exception, e:
                     logging.error(e)
 
             self.decoding_cp866(audio)
@@ -192,13 +193,13 @@ class TagEditor(ChildTopWindow):
         for tag_name, tag_entry in zip(tag_names, self.tag_entries):
             tag_entry.delete_text(0, -1)
             try:
-                if tag_name in self.audious[0]:
+                if self.audious[0].has_key(tag_name):
                     tag_entry.set_text(self.audious[0][tag_name][0])
                 else:
                     tag_entry.set_text('')
             except AttributeError:
                 logging.warn('Can\'t get tags. This is not audio file')
-            except TypeError as e:
+            except TypeError, e:
                 if isinstance(self.audious[0][tag_name][0], tuple):
                     tag_entry.set_text(str(self.audious[0][tag_name][0]).strip('()'))
                 else:
@@ -208,12 +209,12 @@ class TagEditor(ChildTopWindow):
     def save_audio_tags(self, button, paths):
 
         def set_tags(audio, path, tag_name):
-            if not path in self.store:
+            if not self.store.has_key(path):
                 self.store[path] = ["", "", "", ""]
             if isinstance(audio, MP4):
                 tag_name = tag_mp4_name
             try:
-                if tag_name in audio:
+                if audio.has_key(tag_name):
                     if not tag_value:
                         del audio[tag_name]
                         audio.save()
@@ -237,18 +238,18 @@ class TagEditor(ChildTopWindow):
             if (tag_name == "artist" or tag_name == '\xa9ART') and tag_value:
                 self.store[path][0] = tag_value
                 try:
-                    if "title" in audio:
+                    if audio.has_key("title"):
                         self.store[path][1] = audio["title"][0]
-                    elif '\xa9nam' in audio:
+                    elif audio.has_key('\xa9nam'):
                         self.store[path][1] = audio['\xa9nam'][0]
                 except UnicodeDecodeError:
                     pass
             elif (tag_name == "title" or tag_name == '\xa9nam') and tag_value:
                 self.store[path][1] = tag_value
                 try:
-                    if "artist" in audio:
+                    if audio.has_key("artist"):
                         self.store[path][0] = audio["artist"][0]
-                    elif '\xa9ART' in audio:
+                    elif audio.has_key('\xa9ART'):
                         self.store[path][0] = audio['\xa9ART']
                 except UnicodeDecodeError:
                     pass
@@ -285,7 +286,7 @@ class TagEditor(ChildTopWindow):
 
 def edit_tags(a):
     controls, paths = a
-    if not "tag_editor" in globals():
+    if not globals().has_key("tag_editor"):
         global tag_editor
         tag_editor = TagEditor(controls)
     tag_editor.get_audio_tags(paths)

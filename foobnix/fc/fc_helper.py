@@ -8,7 +8,7 @@ Created on 21 февр. 2011
 from __future__ import with_statement
 import os
 import logging
-import pickle
+import cPickle
 import threading
 
 CONFIG_DIR = os.path.join(os.path.expanduser("~"), ".config", "foobnix-3", "")
@@ -22,7 +22,7 @@ if not os.path.exists(CACHE_DIR):
 class FCStates:
     def save(self, fc, file):
         #if in_thread:
-        #    threading.Thread(target = FCHelper().save, args = (fc,)).start()
+        #    thread.start_new_thread(FCHelper().save, (fc,))
         #else:
         FCHelper().save(fc, file)
 
@@ -56,9 +56,9 @@ class FCHelper():
     def save(self, object, file_path):
         self.save_lock.acquire()
         try:
-            save_file = open(file_path, 'wb')
+            save_file = open(file_path, 'w')
             try:
-                pickle.dump(object, save_file)
+                cPickle.dump(object, save_file)
             except Exception as e:
                 logging.error("Error dumping pickle conf " + str(e))
             save_file.close()
@@ -76,16 +76,14 @@ class FCHelper():
                 return self.load(file_path + "_backup")
             return None
 
-        with open(file_path, 'rb') as load_file:
+        with open(file_path, 'r') as load_file:
+                load_file = open(file_path, 'r')
                 pickled = load_file.read()
 
-                try:
-                   object = pickle.loads(pickled)
-                   logging.debug("Config loaded")
-                   self.print_info(object)
-                   return object
-                except:
-                   return None
+                object = cPickle.loads(pickled)
+                logging.debug("Config loaded")
+                self.print_info(object)
+                return object
 
         return None
 
@@ -97,5 +95,5 @@ class FCHelper():
         dict = object.__dict__
         for i in object.__dict__:
             if i not in ["user_id", "access_token", "vk_user", "vk_pass", "lfm_login", "lfm_password", "uuid"]:
-                value = dict[i]
+                value = dict[i] if isinstance(dict[i], unicode) else str(dict[i])
                 logging.debug(i + " " + value[:500])

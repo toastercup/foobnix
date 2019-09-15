@@ -4,10 +4,9 @@ Created on Sep 1, 2012
 @author: zavlab1
 '''
 
-import urllib.parse
-import urllib.request
+import urllib
 import logging
-from html.parser import HTMLParser
+from HTMLParser import HTMLParser
 
 
 class LyricsFinder(HTMLParser):
@@ -26,10 +25,10 @@ class LyricsFinder(HTMLParser):
         self.attr = 'class'
         self.attr_value = 'lyrics-body'
         title = title.encode('utf-8').strip().replace(" ", "_").replace("/", "-")
-        title = urllib.parse.quote(title)
+        title = urllib.quote(title)
         artist = artist.encode('utf-8').strip().replace(" ", "_").replace("/", "-")
-        artist = urllib.parse.quote(artist)
-        result = urllib.request.urlopen(base + title + "_lyrics_" + artist + ".html").read()
+        artist = urllib.quote(artist)
+        result = urllib.urlopen(base + title + "_lyrics_" + artist + ".html").read()
         result = result.replace('&#039;', '!apostrophe!')
         self.feed(result)
         return "\n".join(self.data[7:]).replace('!apostrophe!', '&#039;')
@@ -39,11 +38,11 @@ class LyricsFinder(HTMLParser):
         self.tagname = 'div'
         self.attr = 'class'
         self.attr_value = 'text_inner'
-        title = title.encode("utf-8").replace(" ", "-").replace("/", "-")
-        title = urllib.parse.quote(title)
-        artist = artist.encode("utf-8").replace(" ", "-").replace("/", "-")
-        artist = urllib.parse.quote(artist)
-        result = urllib.request.urlopen(base + artist + "/" + title + ".html").read()
+        title = title.replace(" ", "-").replace("/", "-")
+        title = urllib.quote(title)
+        artist = artist.replace(" ", "-").replace("/", "-")
+        artist = urllib.quote(artist)
+        result = urllib.urlopen(base + artist + "/" + title + ".html").read()
         result = result.replace("&#39;", '!apostrophe!').replace('<br /><br />', '<br />\n<br />')
         self.feed(result)
         return "\n".join(self.data).replace('!apostrophe!', "\'")
@@ -101,4 +100,4 @@ def get_lyrics_by_parsing(artist, title):
 
 
 if __name__ == '__main__':
-    print(get_lyrics_by_parsing("aBBA", " honey, Honey "))
+    print get_lyrics_by_parsing("aBBA", " honey, Honey ")

@@ -26,7 +26,7 @@ def get_all_music_by_paths(paths, controls):
             time.sleep(0.5)
             GObject.idle_add(pr_window.update_window)
 
-    threading.Thread(target = task, args = ()).start()'''
+    thread.start_new_thread(task, ())'''
     result = []
     for path in paths:
         if path == "/":
@@ -159,7 +159,7 @@ def is_dir_with_music(path):
     list = None
     try:
         list = os.listdir(path)
-    except OSError as e:
+    except OSError, e:
         logging.info("Can't get list of dir"+ str(e))
 
     if not list:
