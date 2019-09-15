@@ -32,7 +32,7 @@ import warnings
 import re
 import six
 
-__version__ = '1.8.0'
+__version__ = '1.9.0'
 __author__ = 'Amr Hassan, hugovk'
 __copyright__ = "Copyright (C) 2008-2010 Amr Hassan, 2013-2017 hugovk"
 __license__ = "apache2"
@@ -343,7 +343,7 @@ class _Network(object):
         """
             Returns a Scrobbler object used for submitting tracks to the server
 
-            Quote from http://www.last.fm/api/submissions:
+            Quote from https://www.last.fm/api/submissions:
             ========
             Client identifiers are used to provide a centrally managed database
             of the client versions, allowing clients to be banned if they are
@@ -382,7 +382,7 @@ class _Network(object):
             return self.domain_names[domain_language]
 
     def _get_url(self, domain, url_type):
-        return "http://%s/%s" % (
+        return "https://%s/%s" % (
             self._get_language_domain(domain), self.urls[url_type])
 
     def _get_ws_auth(self):
@@ -396,7 +396,7 @@ class _Network(object):
             Makes sure that web service calls are at least 0.2 seconds apart.
         """
 
-        # Delay time in seconds from section 4.4 of http://www.last.fm/api/tos
+        # Delay time in seconds from section 4.4 of https://www.last.fm/api/tos
         DELAY_TIME = 0.2
         now = time.time()
 
@@ -890,7 +890,7 @@ class LastFMNetwork(_Network):
 
     Most read-only webservices only require an api_key and an api_secret, see
     about obtaining them from:
-    http://www.last.fm/api/account
+    https://www.last.fm/api/account
     """
 
     def __init__(
@@ -899,7 +899,7 @@ class LastFMNetwork(_Network):
         _Network.__init__(
             self,
             name="Last.fm",
-            homepage="http://last.fm",
+            homepage="https://www.last.fm",
             ws_server=("ws.audioscrobbler.com", "/2.0/"),
             api_key=api_key,
             api_secret=api_secret,
@@ -910,17 +910,17 @@ class LastFMNetwork(_Network):
             token=token,
             domain_names={
                 DOMAIN_ENGLISH: 'www.last.fm',
-                DOMAIN_GERMAN: 'www.lastfm.de',
-                DOMAIN_SPANISH: 'www.lastfm.es',
-                DOMAIN_FRENCH: 'www.lastfm.fr',
-                DOMAIN_ITALIAN: 'www.lastfm.it',
-                DOMAIN_POLISH: 'www.lastfm.pl',
-                DOMAIN_PORTUGUESE: 'www.lastfm.com.br',
-                DOMAIN_SWEDISH: 'www.lastfm.se',
-                DOMAIN_TURKISH: 'www.lastfm.com.tr',
-                DOMAIN_RUSSIAN: 'www.lastfm.ru',
-                DOMAIN_JAPANESE: 'www.lastfm.jp',
-                DOMAIN_CHINESE: 'cn.last.fm',
+                DOMAIN_GERMAN: 'www.last.fm/de',
+                DOMAIN_SPANISH: 'www.last.fm/es',
+                DOMAIN_FRENCH: 'www.last.fm/fr',
+                DOMAIN_ITALIAN: 'www.last.fm/it',
+                DOMAIN_POLISH: 'www.last.fm/pl',
+                DOMAIN_PORTUGUESE: 'www.last.fm/pt',
+                DOMAIN_SWEDISH: 'www.last.fm/sv',
+                DOMAIN_TURKISH: 'www.last.fm/tr',
+                DOMAIN_RUSSIAN: 'www.last.fm/ru',
+                DOMAIN_JAPANESE: 'www.last.fm/ja',
+                DOMAIN_CHINESE: 'www.last.fm/zh',
             },
             urls={
                 "album": "music/%(artist)s/%(album)s",
@@ -966,7 +966,7 @@ def get_lastfm_network(
 
     Most read-only webservices only require an api_key and an api_secret, see
     about obtaining them from:
-    http://www.last.fm/api/account
+    https://www.last.fm/api/account
     """
 
     _deprecation_warning("Create a LastFMNetwork object instead")
@@ -997,7 +997,7 @@ class LibreFMNetwork(_Network):
         _Network.__init__(
             self,
             name="Libre.fm",
-            homepage="http://libre.fm",
+            homepage="https://libre.fm",
             ws_server=("libre.fm", "/2.0/"),
             api_key=api_key,
             api_secret=api_secret,
@@ -4410,37 +4410,11 @@ class _ScrobblerRequest(object):
             "HOST": self.hostname
         }
 
-        """ --- Changed by zavlab1 BEGIN --- """
-        if self.network.is_proxy_enabled():
-            import base64, httplib, urllib2
-            from foobnix.fc.fc import FC
-            proxy_rul = FC().proxy_url
-            index = proxy_rul.find(":")
-            proxy = proxy_rul[:index]
-            port = proxy_rul[index + 1:]
-
-            if FC().proxy_user and FC().proxy_password:
-                user = urllib2.unquote(FC().proxy_user)
-                password = urllib2.unquote(FC().proxy_password)
-                auth = base64.b64encode(user + ":" + password).strip()
-                headers['Proxy-Authorization'] =  '''Basic %s''' % auth
-
-            connection = httplib.HTTPConnection(host=proxy, port=port)
-            if self.type == "GET":
-                connection.request(method="GET", url="http://" + self.hostname + self.subdir + "?" + data,
-                                   headers=headers)
-            else:
-                connection.request(method="POST", url="http://" + self.hostname + self.subdir,
-                                   body=data, headers=headers)
+        if self.type == "GET":
+            connection.request(
+                "GET", self.subdir + "?" + data, headers=headers)
         else:
-            """ --- Changed by zavlab1 END --- """
-
-            if self.type == "GET":
-                connection.request(
-                    "GET", self.subdir + "?" + data, headers=headers)
-            else:
-                connection.request("POST", self.subdir, data, headers)
-            
+            connection.request("POST", self.subdir, data, headers)
         response = _unicode(connection.getresponse().read())
 
         self._check_response_for_errors(response)
