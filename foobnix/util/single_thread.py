@@ -7,7 +7,7 @@ Created on 27 сент. 2010
 
 import sys
 import time
-import threading
+import thread
 import logging
 import traceback
 
@@ -32,7 +32,7 @@ class SingleThread():
         if self.lock.acquire(False):
             if self.spinner:
                 self.spinner.start(text)
-            threading.Thread(target = self._thread_task, args = (method, args,)).start()
+            thread.start_new_thread(self._thread_task, (method, args,))
         else:
             logging.warning("Previous thread not finished " + str(method) + " " + str(args))
 
@@ -42,7 +42,7 @@ class SingleThread():
                 method(args)
             elif method:
                 method()
-        except Exception as e:
+        except Exception, e:
             logging.error(str(e))
             exc_type, exc_value, exc_traceback = sys.exc_info()
             traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stdout)

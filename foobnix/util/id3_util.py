@@ -7,7 +7,7 @@ Created on 24 нояб. 2010
 
 import os
 import logging
-import urllib.request
+import urllib
 
 from mutagen.id3 import ID3
 from mutagen.flac import FLAC
@@ -42,7 +42,7 @@ def update_id3_for_beans(beans):
         if get_file_extension(bean.text) in FC().audio_formats:
             try:
                 update_id3(bean)
-            except Exception as e:
+            except Exception, e:
                 logging.warn("update id3 error - % s" % e)
         if bean.text:
             if (bean.text[0] == "/") or (len(bean.text)>1 and bean.text[1] == ":"):
@@ -54,30 +54,32 @@ def update_id3(bean):
     if bean and bean.path and os.path.isfile(bean.path):
         try:
             audio = get_mutagen_audio(bean.path)
-        except Exception as e:
+        except Exception, e:
             logging.warn("ID3 NOT FOUND IN " + str(e) + " " + bean.path)
             return bean
         if audio:
             if isinstance(audio, MP4):
-                if '\xa9ART' in audio: bean.artist = audio["\xa9ART"][0]
-                if '\xa9nam' in audio: bean.title = audio["\xa9nam"][0]
-                if '\xa9alb' in audio: bean.album = audio["\xa9alb"][0]
-                if '\xa9wrt' in audio: bean.composer = audio["\xa9wrt"][0]
-                if 'trkn' in audio:
+                if audio.has_key('\xa9ART'): bean.artist = audio["\xa9ART"][0]
+                if audio.has_key('\xa9nam'): bean.title = audio["\xa9nam"][0]
+                if audio.has_key('\xa9alb'): bean.album = audio["\xa9alb"][0]
+                if audio.has_key('\xa9wrt'): bean.composer = audio["\xa9wrt"][0]
+                if audio.has_key('trkn'):
                     #if not FC().numbering_by_order:
                     bean.tracknumber = audio['trkn'][0]
             else:
-                if 'artist' in audio: bean.artist = correct_encoding(audio["artist"][0])
-                if 'title' in audio: bean.title = correct_encoding(audio["title"][0])
-                if 'album' in audio: bean.album = correct_encoding(audio["album"][0])
-                if 'composer' in audio: bean.composer = correct_encoding(audio['composer'][0])
-                if 'cuesheet' in audio: bean.cue = audio['cuesheet'][0] # correct_encoding is in cue parser
-                if 'tracknumber' in audio:
+                if audio.has_key('artist'): bean.artist = correct_encoding(audio["artist"][0])
+                if audio.has_key('title'): bean.title = correct_encoding(audio["title"][0])
+                if audio.has_key('album'): bean.album = correct_encoding(audio["album"][0])
+                if audio.has_key('composer'): bean.composer = correct_encoding(audio['composer'][0])
+                if audio.has_key('cuesheet'): bean.cue = audio['cuesheet'][0] # correct_encoding is in cue parser
+                if audio.has_key('tracknumber'):
                     #if not FC().numbering_by_order:
                     bean.tracknumber = audio["tracknumber"][0]
 
+        duration_sec = bean.duration_sec
+
         if not bean.duration_sec and audio.info.length:
-            bean.duration_sec = int(audio.info.length)
+            duration_sec = int(audio.info.length)
 
         if audio.info.__dict__:
             bean.info = normalized_info(audio.info, bean)
@@ -98,7 +100,7 @@ def update_id3(bean):
                 bean.tracknumber = ""
         '''
         bean = update_bean_from_normalized_text(bean)
-        bean.time = convert_seconds_to_text(bean.duration_sec)
+        bean.time = convert_seconds_to_text(duration_sec)
 
     return bean
 
@@ -108,18 +110,18 @@ def normalized_info(info, bean):
     new_list = []
     bean.size = os.path.getsize(bean.path)
     new_list.append(list[0])
-    if 'channels' in info.__dict__:
+    if info.__dict__.has_key('channels'):
         new_list.append('Ch: ' + str(info.channels))
-    if 'bits_per_sample' in info.__dict__:
+    if info.__dict__.has_key('bits_per_sample'):
         new_list.append(str(info.bits_per_sample) + ' bit')
-    if 'sample_rate' in info.__dict__:
+    if info.__dict__.has_key('sample_rate'):
         new_list.append(str(info.sample_rate) + 'Hz')
-    if 'bitrate' in info.__dict__:
+    if info.__dict__.has_key('bitrate'):
         new_list.append(str(info.bitrate / 1000) + ' kbps')
     else:
         kbps = int(round(bean.size * 8 / info.length / 1000))
         new_list.append(str(kbps + 1 if kbps % 2 else kbps) + ' kbps')
-    if 'length' in info.__dict__:
+    if info.__dict__.has_key('length'):
         new_list.append(convert_seconds_to_text(int(info.length)))
     size = '%.2f MB' % (float(bean.size) / 1024 / 1024)
     new_list.append(size)
@@ -197,7 +199,7 @@ def set_cover_from_tags(bean):
                 cache_dict[basename] = [bean.text]
             return filename
 
-    except Exception as e:
+    except Exception, e:
         pass
     return None
 
@@ -225,7 +227,7 @@ def get_image_for_bean(bean, controls):
             cache_name = "%s%s.%s" % (COVERS_DIR, crc32(image), ext)
             if os.path.exists(cache_name):
                 return cache_name
-            urllib.request.urlretrieve(image, cache_name)
+            urllib.urlretrieve(image, cache_name)
             return cache_name
         except:
             pass

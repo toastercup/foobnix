@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
-import threading
+import thread
 import logging
 from gi.repository import Gtk
 from gi.repository import GLib
@@ -44,7 +44,7 @@ class PreferencesWindow(ChildTopWindow, FControl, LoadSave):
             from gi.repository import Keybinder #@UnresolvedImport @UnusedImport
             from foobnix.preferences.configs.hotkey_conf import HotKeysConfig
             self.configs.append(HotKeysConfig(controls))
-        except Exception as e:
+        except Exception, e:
             logging.warn("Keybinder not installed" + str(e))
 
         self.configs.append(OtherConfig(controls))
@@ -155,7 +155,7 @@ class PreferencesWindow(ChildTopWindow, FControl, LoadSave):
         logging.debug("restore defaults settings")
         Gtk.main_quit()
         FC().delete()
-        threading.Thread(target = os.system, args = ("foobnix",)).start()
+        thread.start_new_thread(os.system, ("foobnix",))
 
 
     def update_label(self, title):
