@@ -40,13 +40,13 @@ if os.name != 'nt':
         mofile = MO_DIR + 'share/locale/%s/LC_MESSAGES/foobnix.mo' % lang
         pofile = "po/" + lang + ".po"
 
-        print "generating", mofile
+        print("generating", mofile)
         os.system("msgfmt %s -o %s" % (pofile, mofile))
         data_files.append(('share/locale/%s/LC_MESSAGES' % lang, [mofile]))
 
         #data_files.append(('/usr/share/locale/%s/LC_MESSAGES' % lang, ['mo/%s/foobnix.mo' % lang]))
 
-    version = file("foobnix/version.py", "wt")
+    version = open("foobnix/version.py", "wt")
     version.write("FOOBNIX_VERSION='%s'" % VERSION)
     version.close()
 
